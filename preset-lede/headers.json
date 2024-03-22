@@ -30,6 +30,6 @@
   "glinet-microuter-n300": ["1", "ramips", "mt76x8", "glinet_microuter-n300"],
   "xiaomi-4a-100m": ["1", "ramips", "mt76x8", "xiaomi_mi-router-4a-100m"],
   "xiaomi-4c": ["1", "ramips", "mt76x8", "xiaomi_mi-router-4c"],
-  "miwifi-nano": ["1", "ramips", "mt76x8", "xiaomi_miwifi-nano"]
+  "miwifi-nano": ["1", "ramips", "mt76x8", "xiaomi_miwifi-nano"],
   "hiwifi-hc5661a": ["1", "ramips", "mt76x8", "hiwifi_hc5661a"]
 }
