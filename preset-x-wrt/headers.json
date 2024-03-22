@@ -31,6 +31,6 @@
   "xiaomi-4a-100m": ["1", "ramips", "mt76x8", "xiaomi_mi-router-4a-100m"],
   "xiaomi-4c": ["1", "ramips", "mt76x8", "xiaomi_mi-router-4c"],
   "miwifi-3c": ["1", "ramips", "mt76x8", "xiaomi_miwifi-3c"],
-  "miwifi-nano": ["1", "ramips", "mt76x8", "xiaomi_miwifi-nano"]
+  "miwifi-nano": ["1", "ramips", "mt76x8", "xiaomi_miwifi-nano"],
   "hiwifi-hc5661a": ["1", "ramips", "mt76x8", "hiwifi_hc5661a"]
 }
