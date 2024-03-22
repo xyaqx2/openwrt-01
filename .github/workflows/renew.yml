@@ -1,0 +1,93 @@
+name: renew
+
+on:
+  workflow_dispatch:
+    inputs:
+      deploydir:
+        description: 'file(s) directory'
+        required: true 
+        type: string
+        default: 'preset-lede'
+      dotconfig:
+        description: '<serial>.config file(s)'
+        required: true 
+        type: string
+        default: '1.config, 2.config'
+
+permissions:
+  contents: write
+
+jobs:
+
+  set-matrix:
+    runs-on: ubuntu-latest
+    outputs:
+      dotconfig: ${{ steps.set-matrix.outputs.dotconfig }}
+      deploydir: ${{ steps.set-matrix.outputs.deploydir }}
+    steps:
+
+      - uses: actions/checkout@v4
+      
+      - id: set-matrix        
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const fs = require('fs');
+            let dotconfig = [];
+            let cLs = "${{ inputs.dotconfig }}".replaceAll(' ', '').split(',');
+            let deploydir = "${{ inputs.deploydir }}".trim();
+            if (deploydir.endsWith('/')) deploydir = deploydir.slice(0, -1);
+            for (i=0; i<cLs.length; i++) {
+                try {
+                    fs.accessSync(deploydir + '/' + cLs[i]);
+                    dotconfig.push(cLs[i]);
+                }
+                catch (err) {
+                    console.log(cLs[i] + ' does not exist!');
+                }
+            }
+            core.setOutput("dotconfig", JSON.stringify(dotconfig));
+            core.setOutput("deploydir", deploydir);
+
+  renew:
+    needs: set-matrix
+    runs-on: ubuntu-latest
+    env:
+      DEPLOY_DIR: ${{ needs.set-matrix.outputs.deploydir }}
+      DOT_CONFIG: ${{ matrix.dotconfig }}
+    strategy:
+      matrix: 
+        dotconfig: ${{ fromJSON(needs.set-matrix.outputs.dotconfig) }}
+    steps:
+
+    - uses: actions/checkout@v4
+
+    - name: Carry out
+      env:
+        RENEW_PY: extra-files/renew.py
+      run: |
+        chmod +x $RENEW_PY
+        $RENEW_PY
+
+    - uses: actions/upload-artifact@v3
+      with:
+        name: ${{ env.DEPLOY_DIR }}
+        path: ${{ env.DEPLOY_DIR }}
+
+  commit:
+    needs: renew
+    runs-on: ubuntu-latest
+    steps:
+
+    - uses: actions/checkout@v4
+
+    - uses: actions/download-artifact@v3
+      
+    - uses: geekyeggo/delete-artifact@v2
+      with:
+          name: '*'
+
+    - uses: stefanzweifel/git-auto-commit-action@v5
+      with:
+        commit_message: renew .config files 
+        commit_author: github-actions[bot] <github-actions[bot]@users.noreply.github.com>

@@ -1,0 +1,201 @@
+#
+# Copyright (C) 2022-2024 hugcabbage <fengsongtianxia@gmail.com>
+#
+# This is free software, licensed under the MIT License.
+#
+# <https://github.com/hugcabbage/shared-lede>
+#
+name: build multi devices
+
+on:
+#  schedule:
+#    - cron: 0 22 * * 5
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: 'select version'
+        required: true
+        type: choice
+        options:
+          - 'openwrt-23.05'
+          - 'openwrt-22.03'
+          - 'master'
+      latest_tag:
+        description: 'switch to the latest stable version (none in master)'
+        required: false
+        type: boolean
+      lan_ipad:
+        description: 'set LAN port IP address (will override settings in modify script)'
+        required: false
+        default: ''
+        type: string
+      login_pwd:
+        description: 'set initial login password (will override settings in modify script)'
+        required: false
+        default: ''
+        type: string
+      record:
+        description: 'input version description'
+        required: false
+        default: 'details: kernel bumped, application version updated'
+        type: string
+      release:
+        description: 'upload firmware to release'
+        required: false
+        default: true
+        type: boolean
+      artifact:
+        description: 'upload firmware to artifact'
+        required: false
+        default: false
+        type: boolean
+
+permissions:
+  contents: write
+
+jobs:
+  to-build:
+    name: ${{ matrix.multi_config }}
+    runs-on: ubuntu-latest
+    env:
+      EXTRA_STR: _some
+    strategy:
+      fail-fast: false
+      matrix:
+        multi_config:
+          - 'multi-common.config'
+          - 'multi-mini.config'
+    steps:
+
+      - name: Hide sensitive inputs
+        if: github.event_name == 'workflow_dispatch'
+        uses: hugcabbage/action-hide-sensitive-inputs@v1
+        with:
+          include_inputs: login_pwd
+
+      - name: Display initial disk space
+        run: |
+          df -h
+
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          path: ${{ env.EXTRA_STR }}
+
+      - name: Prepare environments
+        env:
+          REQUIREMENTS: ${{ env.EXTRA_STR }}/extra-files/requirements-transit.txt
+        run: |
+          sudo apt-get update
+          sudo apt-get -y install gcc-multilib gettext libfuse-dev
+          sudo apt-get clean
+          pip3 install -r $REQUIREMENTS
+
+      - name: Prepare deployment
+        id: prepare-deployment
+        env:
+          MULTI_CONFIG: ${{ matrix.multi_config }}
+          BRANCH_NAME: ${{ inputs.branch }}
+          LATEST_TAG: ${{ inputs.latest_tag }}
+          LOGIN_IP: ${{ inputs.lan_ipad }}
+          LOGIN_PWD: ${{ inputs.login_pwd }}
+          TEMP_PREFIX: ${{ env.EXTRA_STR }}
+          DEPLOY_DIR: ${{ env.EXTRA_STR }}/preset-openwrt
+          TRANSIT_PY: ${{ env.EXTRA_STR }}/extra-files/transit.py
+        run: |
+          chmod +x $TRANSIT_PY
+          $TRANSIT_PY
+
+      - name: Clone sources
+        env:
+          CLONE_SH: ${{ steps.prepare-deployment.outputs.clone_sh }}
+        run: |
+          chmod +x $CLONE_SH
+          $CLONE_SH
+
+      - name: Update feeds
+        run: |
+          ./scripts/feeds update -a
+          ./scripts/feeds install -a
+
+      - name: Modify configuration
+        env:
+          MODIFY_SH: ${{ steps.prepare-deployment.outputs.modify_sh }}
+        run: |
+          chmod +x $MODIFY_SH
+          $MODIFY_SH
+
+      - name: Generate .config
+        env:
+          DOT_CONFIG: ${{ steps.prepare-deployment.outputs.dot_config }}
+        run: |
+          mv $DOT_CONFIG .config
+          make defconfig
+
+      - name: Make download
+        run: |
+          make download -j8 || make download -j1 V=s
+
+      - name: Compile
+        run: |
+          make -j$(nproc) || make -j1 V=s
+
+      - name: Pick up files
+        run: |
+          mkdir -p _collected_firmware/packages
+          rm -rf $(find bin/targets/ -type d -name 'packages')
+          cp $(find bin/targets/ -type f) _collected_firmware
+          cp $(find bin/packages/ -type f -name '*.ipk') _collected_firmware/packages
+          cd _collected_firmware
+          zip -r allfiles.zip *
+          cd packages
+          zip -r ../packages.zip *
+
+      - name: Generate summary
+        continue-on-error: true
+        id: generate-summary
+        env:
+          FOR_DEVICE: ${{ steps.prepare-deployment.outputs.fordevice }}
+          CODE_DIR: ${{ steps.prepare-deployment.outputs.codedir }}
+          TRANSIT_PY: ${{ env.EXTRA_STR }}/extra-files/transit.py
+        run: |
+          chmod +x $TRANSIT_PY
+          $TRANSIT_PY
+
+      - name: Calculate tag version
+        id: calculate-version
+        if: inputs.release || github.event_name != 'workflow_dispatch'
+        uses: hugcabbage/next-version@v1
+        with:
+          repo_path: ${{ env.EXTRA_STR }}
+
+      - name: Upload firmware to release
+        id: to-release
+        if: steps.calculate-version.conclusion == 'success' && inputs.release || github.event_name != 'workflow_dispatch'
+        continue-on-error: true
+        uses: svenstaro/upload-release-action@v2
+        with:
+          file: _collected_firmware/*
+          tag: ${{ steps.calculate-version.outputs.version }}
+          release_name: ${{ steps.calculate-version.outputs.version }} ${{ steps.generate-summary.outputs.stitle }}
+          overwrite: true
+          prerelease: false
+          body: |
+            ${{ inputs.record }}
+            ${{ steps.generate-summary.outputs.summary }}
+          file_glob: true
+
+      - name: Upload firmware to artifact
+        if: inputs.artifact || steps.to-release.outcome != 'success'
+        uses: actions/upload-artifact@v3
+        with:
+          name: collected_firmware
+          path: |
+            _collected_firmware/
+            !_collected_firmware/*.zip
+
+      - name: Display finishing disk space
+        run: |
+          df -h
+          echo "----------------------------"
+          du -h --max-depth=1

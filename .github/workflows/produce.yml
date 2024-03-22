@@ -1,0 +1,73 @@
+name: produce
+
+on:
+  workflow_dispatch:
+    inputs:
+      init_file:
+        description: 'init file path'
+        required: false
+        type: string
+        default: 'templet/init.toml'
+      deploydir:
+        description: 'directory to place output files'
+        required: true
+        type: string
+        default: 'custom'
+      overwrite_spec:
+        description: 'overwrite specific deployment, can only accept single <serial>, like 1'
+        required: false
+        type: string
+      delete_some:
+        description: 'delete some deployment(s), can accept multiple <serial>, like 1, 2, 3'
+        required: false
+        type: string
+      overwrite_last:
+        description: 'overwrite last deployment'
+        required: false
+        type: boolean
+      delete_all:
+        description: 'delete all deployments'
+        required: false
+        type: boolean
+
+jobs:
+  produce:
+    runs-on: ubuntu-latest
+    env:
+      REPO_PATH: _pro
+      PRODUCE_DEVICE: ${{ secrets.PRODUCE_DEVICE }}
+    steps:
+
+    - uses: actions/checkout@v4
+      if: env.PRODUCE_DEVICE != ''
+      with:
+        path: ${{ env.REPO_PATH }}
+        token: ${{ env.PRODUCE_DEVICE }}
+
+    - name: Carry out
+      if: env.PRODUCE_DEVICE != ''
+      env:
+        INIT_FILE: ${{ inputs.init_file }}
+        DEPLOY_DIR: ${{ inputs.deploydir }}
+        OVERWRITE_LAST: ${{ inputs.overwrite_last }}
+        OVERWRITE_SPEC: ${{ inputs.overwrite_spec }}
+        DELETE_SOME: ${{ inputs.delete_some }}
+        DELETE_ALL: ${{ inputs.delete_all }}
+        REQUIREMENTS: ${{ env.REPO_PATH }}/templet/requirements.txt
+        PRODUCE_PY: ${{ env.REPO_PATH }}/templet/produce.py
+      run: |
+        pip3 install -r $REQUIREMENTS
+        chmod +x $PRODUCE_PY
+        $PRODUCE_PY
+
+    - uses: stefanzweifel/git-auto-commit-action@v5
+      if: env.PRODUCE_DEVICE != ''
+      with:
+        repository: ${{ env.REPO_PATH }}
+        commit_message: change device deployment
+        commit_author: github-actions[bot] <github-actions[bot]@users.noreply.github.com>
+
+    - name: Lack token print
+      if: env.PRODUCE_DEVICE == ''
+      run: echo 'Have no token, workflow exits!'
+      

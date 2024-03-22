@@ -1,0 +1,29 @@
+# board, subtarget and device, you could look them up in openwrt code
+# for example: openwrt/target/linux/ramips/image/mt7621.mk
+
+# device_name is a custom string to use for workflow name
+
+# base source uses git way, <path> is a custom path to store the code
+# format: <url>@<branch>@<path>; <url>@<branch>; <url>@@<path>; <url>
+
+# app source uses git way, <path> is a custom path to store the code
+# git format: same as base source
+
+# board, subtarget, device, base are required, others are optional
+
+board = "qualcommax"
+subtarget = "ipq807x"
+device = "xiaomi_ax9000"
+base = "https://git.openwrt.org/openwrt/openwrt.git@master"
+
+device_name = "xiaomi ax9000"
+app_path = "package/_supply_packages"
+git_app = [
+  "https://github.com/jerrykuku/luci-theme-argon.git",
+  "https://github.com/jerrykuku/luci-app-argon-config.git",
+  "https://github.com/xiaorouji/openwrt-passwall-packages.git@@pw-dependencies",
+  "https://github.com/xiaorouji/openwrt-passwall.git",
+  "https://github.com/xiaorouji/openwrt-passwall2.git"
+]
+login_ip = "192.168.21.1"
+login_pwd = "00009999"
