@@ -49,6 +49,7 @@ on:
           - 'xiaomi-4a-100m'
           - 'xiaomi-4c'
           - 'miwifi-nano'
+          - 'hiwifi-hc5661a'
       lan_ipad:
         description: '设置LAN口IP地址(会覆盖modify脚本中的设置)'
         required: false
