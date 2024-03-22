@@ -50,6 +50,7 @@ on:
           - 'xiaomi-4c'
           - 'miwifi-3c'
           - 'miwifi-nano'
+          - 'hiwifi-hc5661a'
       latest_tag:
         description: '切换到最近稳定版本'
         required: false
