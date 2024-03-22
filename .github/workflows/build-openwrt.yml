@@ -52,6 +52,7 @@ on:
           - 'xiaomi-4c'
           - 'miwifi-3c'
           - 'miwifi-nano'
+          - 'hiwifi-hc5661a'
           - 'other'
       branch:
         description: '选择版本'
