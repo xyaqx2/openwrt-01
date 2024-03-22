@@ -11,12 +11,12 @@
 
 # board, subtarget, device, base are required, others are optional
 
-board = "qualcommax"
-subtarget = "ipq807x"
-device = "xiaomi_ax9000"
+board = "ramips"
+subtarget = "mt76x8"
+device = "hiwifi_hc5661a"
 base = "https://git.openwrt.org/openwrt/openwrt.git@master"
 
-device_name = "xiaomi ax9000"
+device_name = "hiwifi-hc5661a"
 app_path = "package/_supply_packages"
 git_app = [
   "https://github.com/jerrykuku/luci-theme-argon.git",
