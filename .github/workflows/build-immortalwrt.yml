@@ -89,6 +89,11 @@ on:
         description: '上传到artifact'
         required: false
         type: boolean
+      SSH_ACTION:
+        description: 'SSH远程配置固件'
+        required: false
+        default: 'false'
+        type: boolean
 
 permissions:
   contents: write
