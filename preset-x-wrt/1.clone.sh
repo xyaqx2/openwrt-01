@@ -4,7 +4,7 @@
 CODE_DIR=_firmware_code
 SWITCH_LATEST_TAG=false
 git clone https://github.com/x-wrt/x-wrt.git $CODE_DIR
-git clone https://github.com/xyaqx2/packages.git $CODE_DIR
+git clone https://github.com/haiibo/openwrt-packages package/openwrt-packages $CODE_DIR
 if $SWITCH_LATEST_TAG; then
     cd $CODE_DIR
     LATEST_TAG_HASH=$(git rev-list --tags --max-count=1)
