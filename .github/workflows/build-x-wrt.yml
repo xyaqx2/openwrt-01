@@ -148,10 +148,10 @@ jobs:
 
       - name: Modify configuration
         env:
-          CLONE_SH: ${{ steps.prepare-deployment.outputs.clone_sh }}
+          MODIFY_SH: ${{ steps.prepare-deployment.outputs.modify_sh }}
         run: |
-          chmod +x $CLONE_SH
-          $CLONE_SH
+          chmod +x $MODIFY_SH
+          $MODIFY_SH
 
       - name: Generate .config
         env:
