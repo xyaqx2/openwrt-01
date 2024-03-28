@@ -147,11 +147,11 @@ jobs:
           ./scripts/feeds install -a
 
       - name: Modify configuration
+        uses: danshui-git/debugger-action@main
+        if: env.SSH_ACTIONS == 'true' || (github.event.inputs.SSH_ACTION == 'true')
         env:
-          MODIFY_SH: ${{ steps.prepare-deployment.outputs.modify_sh }}
-        run: |
-          chmod +x $MODIFY_SH
-          $MODIFY_SH
+        TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
 
       - name: Generate .config
         env:
