@@ -30,3 +30,4 @@ git clone --depth=1 https://github.com/xiaorouji/openwrt-passwall package/luci-a
 git clone --depth=1 https://github.com/xiaorouji/openwrt-passwall2 package/luci-app-passwall2
 git clone --depth 1 https://github.com/vernesong/OpenClash.git && mv OpenClash/luci-app-openclash ./ && rm -rf OpenClash
 git clone --depth=1 https://github.com/sirpdboy/luci-app-netwizard
+git clone --depth=1 https://github.com/tianiue/luci-app-bypass
